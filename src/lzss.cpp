@@ -10,6 +10,7 @@
 
 size_t lzss_compress(const uint8_t* input, size_t input_size, std::vector<uint8_t>& output) {
     uint8_t flags_index = 0, flags_byte = 0;
+    size_t wrote = 0;
     std::vector<uint8_t> tag_buffer;
 
     SearchBuffer search_buffer(input, input_size);
@@ -33,7 +34,8 @@ size_t lzss_compress(const uint8_t* input, size_t input_size, std::vector<uint8_
         flags_index++;
 
         if (flags_index == 8 || i == input_size - 1) {
-            if (output.size() + tag_buffer.size() + 1 >= input_size) {
+            size_t to_write = tag_buffer.size() + 1;
+            if (wrote + to_write >= input_size) {
                 return input_size; // Output too large, compression failed
             }
             
@@ -42,16 +44,17 @@ size_t lzss_compress(const uint8_t* input, size_t input_size, std::vector<uint8_
                 output.push_back(tag_buffer[j]);
             }
             tag_buffer.clear();
+            wrote += to_write;
             flags_byte = 0;
             flags_index = 0;
         }
     }
 
-    return output.size();
+    return wrote;
 }
 
 size_t lzss_decompress(const uint8_t* input, size_t input_size, std::vector<uint8_t>& output) {
-    size_t input_pos = 0;
+    size_t input_pos = 0, wrote = 0;
 
     while (input_pos < input_size) {
         uint8_t flags_byte = input[input_pos++];
@@ -66,11 +69,13 @@ size_t lzss_decompress(const uint8_t* input, size_t input_size, std::vector<uint
                 for (size_t j = 0; j < match_len; j++) {
                     output.push_back(output[match_pos++]);
                 }
+                wrote += match_len;
             } else {
                 output.push_back(input[input_pos++]);
+                wrote++;
             }
         }
     }
 
-    return output.size();
+    return wrote;
 }

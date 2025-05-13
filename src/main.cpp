@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include "includes/argparse.hpp"
-#include "lzss.hpp"
+#include "serialization.hpp"
 
 int main(int argc, char *argv[]) {
     argparse::ArgumentParser program("lz_codec");
@@ -25,12 +25,12 @@ int main(int argc, char *argv[]) {
     program.add_argument("-o").help("Output file").required().metavar("ofile");
 
     int width = 0;
-    bool compress;
+    bool compress_flag;
     try {
         program.parse_args(argc, argv);
     
-        compress = program.is_used("-c");
-        if (compress) {
+        compress_flag = program.is_used("-c");
+        if (compress_flag) {
             width = program.get<int>("-w");
             if (width <= 0) {
                 throw std::runtime_error("Error: Width must be a positive integer.");
@@ -51,14 +51,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     auto size = std::filesystem::file_size(input_file);
-    if (compress && size / width % 256 != 0) {
+    if (compress_flag && size / width % 256 != 0) {
         std::cerr << "Error: Input height must be a multiple of 256." << std::endl;
         return 1;
     }
     std::unique_ptr<uint8_t[]> input_buffer(new uint8_t[size]);
     input_file_stream.read(reinterpret_cast<char*>(input_buffer.get()), size);
-
-    std::cout << "Input file size: " << size << " bytes" << std::endl;
 
     std::string output_file = program.get<std::string>("-o");
     std::ofstream output_file_stream(output_file, std::ios::binary);
@@ -67,17 +65,24 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
+    size_t output_size;
     std::vector<uint8_t> output_buffer;
     output_buffer.reserve(size);
-    if (compress) {
-        size_t compressed_size = lzss_compress(input_buffer.get(), size, output_buffer);
-        output_file_stream.write(reinterpret_cast<char*>(output_buffer.data()), compressed_size);
-        std::cout << "Compressed file size: " << compressed_size << " bytes" << std::endl;
+    if (compress_flag) {
+        output_size = compress(input_buffer.get(), size, width, program.is_used("-a"), program.is_used("-m"), output_buffer);
     } else {
-        size_t decompressed_size = lzss_decompress(input_buffer.get(), size, output_buffer);
-        output_file_stream.write(reinterpret_cast<char*>(output_buffer.data()), decompressed_size);
-        std::cout << "Decompressed file size: " << decompressed_size << " bytes" << std::endl;
+        output_size = decompress(input_buffer.get(), size, output_buffer);
+        if (output_size == 0) {
+            std::cerr << "Error: Decompression failed." << std::endl;
+            return 1;
+        }
     }
+    output_file_stream.write(reinterpret_cast<char*>(output_buffer.data()), output_size);
+
+    #ifdef DEBUG
+    std::cout << "Input file size: " << size << " bytes" << std::endl;
+    std::cout << "Output file size: " << output_size << " bytes" << std::endl;
+    #endif
 
     return 0;
 }

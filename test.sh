@@ -23,7 +23,7 @@ echo "------------------------------------------"
 echo -e "${BLUE}Running tests for lz_codec${NC}"
 echo "------------------------------------------"
 
-POSSIBLEFLAGS=("")
+POSSIBLEFLAGS=("" "-m")
 ALLFILES=()
 
 for file in data/*.raw
