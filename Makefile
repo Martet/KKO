@@ -25,4 +25,7 @@ debug: $(TARGET)
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)
 
-.PHONY: all clean debug
+zip:
+	zip -r xzmitk01.zip $(SRC_DIR) Makefile dokumentace.pdf
+
+.PHONY: all clean debug zip
