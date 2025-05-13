@@ -21,9 +21,10 @@ void SearchBuffer::slide(size_t n) {
             root = delete_node(root, i - SLIDING_WINDOW_SIZE);
         }
 
-        window_pos++;
         root = insert_node(root, i);
     }
+
+    window_pos += n;
 }
 
 size_t SearchBuffer::find_best_match(size_t pos, size_t* match_len) const {
@@ -139,7 +140,7 @@ size_t SearchBuffer::common_prefix_len(size_t pos_a, size_t pos_b) const {
         if (pos_a + i >= buffer_size || pos_b + i >= buffer_size
             || buffer[pos_a + i] != buffer[pos_b + i]
         ) {
-            return i + 1;
+            return i;
         }
     }
 

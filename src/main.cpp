@@ -9,6 +9,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include "includes/argparse.hpp"
 #include "lzss.hpp"
 
@@ -23,7 +24,7 @@ int main(int argc, char *argv[]) {
     program.add_argument("-i").help("Input file").required().metavar("ifile");
     program.add_argument("-o").help("Output file").required().metavar("ofile");
 
-    int width;
+    int width = 0;
     bool compress;
     try {
         program.parse_args(argc, argv);
@@ -66,18 +67,15 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
+    std::vector<uint8_t> output_buffer;
+    output_buffer.reserve(size);
     if (compress) {
-        std::unique_ptr<uint8_t[]> output_buffer(new uint8_t[size]);
-        std::cout << "Compressed file size: " << lzss_compress(input_buffer.get(), size, output_buffer.get(), 0) << " bytes" << std::endl;
-        output_file_stream.write(reinterpret_cast<char*>(output_buffer.get()), size);
+        size_t compressed_size = lzss_compress(input_buffer.get(), size, output_buffer);
+        output_file_stream.write(reinterpret_cast<char*>(output_buffer.data()), compressed_size);
+        std::cout << "Compressed file size: " << compressed_size << " bytes" << std::endl;
     } else {
-        std::unique_ptr<uint8_t[]> output_buffer(new uint8_t[262144]);
-        size_t decompressed_size = lzss_decompress(input_buffer.get(), size, output_buffer.get(), 262144);
-        if (decompressed_size == 0) {
-            std::cerr << "Error: Decompression failed." << std::endl;
-            return 1;
-        }
-        output_file_stream.write(reinterpret_cast<char*>(output_buffer.get()), decompressed_size);
+        size_t decompressed_size = lzss_decompress(input_buffer.get(), size, output_buffer);
+        output_file_stream.write(reinterpret_cast<char*>(output_buffer.data()), decompressed_size);
         std::cout << "Decompressed file size: " << decompressed_size << " bytes" << std::endl;
     }
 
