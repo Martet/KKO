@@ -24,7 +24,7 @@ size_t lzss_compress(const uint8_t* input, size_t input_size, std::vector<uint8_
             uint16_t out_tag = out_len | out_pos;
             tag_buffer.push_back(out_tag & 0xFF);
             tag_buffer.push_back(out_tag >> 8);
-            flags_byte |= (1 << flags_index);
+            flags_byte |= (1 << flags_index); // Flag == 1 for a tag
             i += match_len - 1;
             search_buffer.slide(match_len);
         } else {
@@ -33,6 +33,7 @@ size_t lzss_compress(const uint8_t* input, size_t input_size, std::vector<uint8_
         }
         flags_index++;
 
+        // If we have 8 flags or reached the end of input, write the flags and tags
         if (flags_index == 8 || i == input_size - 1) {
             size_t to_write = tag_buffer.size() + 1;
             if (wrote + to_write >= input_size) {
