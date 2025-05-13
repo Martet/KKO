@@ -20,7 +20,7 @@ size_t lzss_compress(const uint8_t* input, size_t input_size, std::vector<uint8_
         size_t match_pos = search_buffer.find_best_match(i, &match_len);
         if (match_len >= MATCH_THRESHOLD) {
             uint8_t out_len = match_len - MATCH_THRESHOLD;
-            uint16_t out_pos = (i - match_pos - 1) << 4;
+            uint16_t out_pos = (i - match_pos - 1) << 5;
             uint16_t out_tag = out_len | out_pos;
             tag_buffer.push_back(out_tag & 0xFF);
             tag_buffer.push_back(out_tag >> 8);
@@ -64,8 +64,8 @@ size_t lzss_decompress(const uint8_t* input, size_t input_size, std::vector<uint
                 uint8_t low_byte = input[input_pos++];
                 uint8_t high_byte = input[input_pos++];
                 uint16_t tag = (high_byte << 8) | low_byte;
-                size_t match_len = (tag & 0x0F) + MATCH_THRESHOLD;
-                size_t match_pos = output.size() - (tag >> 4) - 1;
+                size_t match_len = (tag & 0x1F) + MATCH_THRESHOLD;
+                size_t match_pos = output.size() - (tag >> 5) - 1;
 
                 for (size_t j = 0; j < match_len; j++) {
                     output.push_back(output[match_pos++]);

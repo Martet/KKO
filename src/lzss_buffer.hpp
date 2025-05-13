@@ -9,8 +9,8 @@
 #include <cstddef>
 #include <cstdint>
 
-#define SLIDING_WINDOW_SIZE 4096
-#define LOOKAHEAD_SIZE 18
+#define SLIDING_WINDOW_SIZE 2048
+#define LOOKAHEAD_SIZE 34
 #define MATCH_THRESHOLD 3
 
 class SearchBuffer {

@@ -1,5 +1,5 @@
-CC = g++
-CXXFLAGS = -Wall -Wextra -std=c++17
+CC = c++
+CXXFLAGS = -Wall -Wextra -std=c++17 -Flto
 
 TARGET = lz_codec
 SRC_DIR = src
@@ -11,7 +11,7 @@ all: CXXFLAGS += -Ofast
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $^ -o $@
+	$(CC) $(CXXFLAGS) $^ -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CC) $(CXXFLAGS) -c $< -o $@
